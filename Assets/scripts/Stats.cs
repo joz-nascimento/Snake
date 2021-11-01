@@ -10,7 +10,6 @@ public class Stats : MonoBehaviour {
     Button btn_batteringRamBlock;
     Button btn_timeTravelBlock;
 
-
     private void Awake() {
         playerId = transform.Find("PlayerID").gameObject.GetComponent<Text>();
         slider = transform.GetComponentInChildren<Slider>();

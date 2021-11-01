@@ -7,7 +7,7 @@ public class ScreenHUD : MonoBehaviour
 {
     public GameObject groupUi;
     public List<GameObject> playersInfoList;
-    public List<KeyColor> keyColors;
+    public List<KeySkin> keySkins;
     Canvas myCanvas;
     GameObject myGO;
     int index = 0;
@@ -16,10 +16,13 @@ public class ScreenHUD : MonoBehaviour
     public List<KeyCode> playerKeys;
     public List<Color> playerColors;
     public List<Color> availableColors;
-    public Color currentColor;
+    public int currentSkin;
     public int indexColor;
+    public int indexSkin;
 
     public Text UIText;
+    public GameObject snake_PF;
+    GameObject snake;
 
     public float downTime, upTime, pressTime = 0;
     public float countDown = 1.0f;
@@ -42,12 +45,17 @@ public class ScreenHUD : MonoBehaviour
 
     screens currentScreen = screens.FirstPlayer;
 
+    // Gameplay teste
+    //screens currentScreen = screens.InGame;
+
 
     void Start() {
+        Camera.main.transform.position = new Vector3(5.9f, 5.75f, 9.31f);
+        Camera.main.transform.eulerAngles = new Vector3(58.8f, -195.2f, 0);
+        Camera.main.orthographic = false;
         playersInfoList = new List<GameObject>();
-        ListBasicColors();
-        indexColor = 0;
-        currentColor = availableColors[indexColor];
+        //indexColor = 0;
+        indexSkin = 0;
 
         // Canvas
         myGO = new GameObject();
@@ -62,7 +70,7 @@ public class ScreenHUD : MonoBehaviour
         UIText = CreateText();
         ellegibleKeys = new List<KeyCode> { KeyCode.Space, KeyCode.Space };
         availableKeys = new List<KeyCode>();
-        keyColors = new List<KeyColor>();
+        keySkins = new List<KeySkin>();
         playerKeys = new List<KeyCode>();
         string keys = "1234567890QWERTYUIOPASDFGHJKLZXCVBNM";
         for (int i = 0; i < keys.Length; i++) {
@@ -73,7 +81,34 @@ public class ScreenHUD : MonoBehaviour
             KeyCode thisKeyCode = (KeyCode)System.Enum.Parse(typeof(KeyCode), key);
             availableKeys.Add(thisKeyCode);
         }
+        CreateModel();
+        snake.SetActive(false);
+    }
 
+    void CreateModel() {
+        snake = Instantiate(snake_PF);
+        Snake snk = snake.GetComponent<Snake>();
+        snk.currentSpeed = 0;
+        snk.minimumSpeed = 0;
+        snk.snakesInitialLength = 7;
+        snk.sizeX = 10;
+        snk.sizeY = 10;
+        snk.IAPilot = false;
+        snk.name = "Model";
+        snk.Setup();
+        Vector3 pos = snk.snakeList[0].transform.position;
+        snk.snakeList[1].transform.Rotate(0, -90, 0);
+        snk.snakeList[1].GetComponent<Body>().SetSection(Body.Section.body, Body.Movement.turnRight);
+        snk.snakeList[2].transform.position = new Vector3(pos.x+1, pos.y, pos.z-1);
+        snk.snakeList[2].GetComponent<Body>().SetSection(Body.Section.body, Body.Movement.turnLeft);
+        snk.snakeList[3].transform.position = new Vector3(pos.x+1, pos.y, pos.z-2);
+        snk.snakeList[4].transform.position = new Vector3(pos.x+1, pos.y, pos.z-3);
+        snk.snakeList[4].transform.Rotate(0, -90, 0);
+        snk.snakeList[4].GetComponent<Body>().SetSection(Body.Section.body, Body.Movement.turnRight);
+        snk.snakeList[5].transform.position = new Vector3(pos.x+2, pos.y, pos.z-3);
+        snk.snakeList[5].transform.Rotate(0, -90, 0);
+        snk.snakeList[6].transform.position = new Vector3(pos.x + 3, pos.y, pos.z - 3);
+        snk.snakeList[6].transform.Rotate(0, -90, 0);
     }
 
     Text CreateText() {
@@ -96,7 +131,7 @@ public class ScreenHUD : MonoBehaviour
         rectTransform = Mytext.GetComponent<RectTransform>();
         rectTransform.localPosition = Vector3.zero;
         rectTransform.sizeDelta = new Vector2(400, 200);
-        Mytext.color = availableColors[1];
+        //Mytext.color = availableColors[1];
         return Mytext;
     }
 
@@ -111,34 +146,39 @@ public class ScreenHUD : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.Return)) {
                     UIText.enabled = false;
                     currentScreen = screens.InGame;
-                    //gameboard.StartGame(playerKeys);
-                    gameboard.StartGame(keyColors);
+                    Camera.main.transform.position = new Vector3(20, 16.63f, 9);
+                    Camera.main.transform.eulerAngles = new Vector3(90, 0, 0);
+                    Camera.main.orthographic = true;
+                    Destroy(snake);
+                    gameboard.StartGame(keySkins);
                 }
                 ScanKeys();
                 break;
             case screens.RegisteredPlayer:
                 if (Input.GetKeyDown(KeyCode.Return)) {
-                    KeyColor temp = new KeyColor();
-                    temp.Setup(ellegibleKeys[0], ellegibleKeys[1], currentColor);
-                    keyColors.Add(temp);
-                    currentColor = availableColors[0];
+                    KeySkin temp = new KeySkin();
+                    temp.Setup(ellegibleKeys[0], ellegibleKeys[1], indexSkin);
+                    keySkins.Add(temp);
+                    indexSkin = 0;
+                    snake.GetComponent<Snake>().ChangeSkin(indexSkin);
                     currentScreen = screens.AnotherPlayer;
+                    snake.SetActive(false);
                 }
                 if (Input.GetKeyDown(ellegibleKeys[0])) {
-                    indexColor -= 1;
-                    if (indexColor < 0) {
-                        indexColor = availableColors.Count - 1;
+                    indexSkin -= 1;
+                    if (indexSkin < 0) {
+                        indexSkin = 15;
                     }
-                    currentColor = availableColors[indexColor];
+                    snake.GetComponent<Snake>().ChangeSkin(indexSkin);
                 }
                 else if (Input.GetKeyDown(ellegibleKeys[1])) {
-                    indexColor += 1;
-                    if (indexColor >= availableColors.Count) {
-                        indexColor = 0;
+                    indexSkin += 1;
+                    if (indexSkin >= 15) {
+                        indexSkin = 0;
                     }
-                    currentColor = availableColors[indexColor];
+                    snake.GetComponent<Snake>().ChangeSkin(indexSkin);
                 }
-                UIText.color = currentColor;
+                //UIText.color = currentSkin;
                 break;
             case screens.GameOver:
                 UIText.enabled = true;
@@ -194,6 +234,15 @@ public class ScreenHUD : MonoBehaviour
         return obj;
     }
 
+    public void AlignPlayerInfo(List<GameObject> objs) {
+        int count = 0;
+        foreach (var obj in objs) {
+            obj.GetComponent<Snake>().stats.transform.SetParent(myCanvas.transform);
+            obj.GetComponent<Snake>().stats.GetComponent<RectTransform>().anchoredPosition = new Vector3(5 + 140 * count, -5, 0);
+            count += 1;
+        }
+    }
+
     void SortKeys() {
         float keyA = UpdateValue(availableKeys.IndexOf(ellegibleKeys[0]));
         float keyB = UpdateValue(availableKeys.IndexOf(ellegibleKeys[1]));
@@ -221,48 +270,27 @@ public class ScreenHUD : MonoBehaviour
     }
 
     void RegisterPlayer() {
-        //string playerId = (playerKeys.Count / 2).ToString();
-        string playerId = (keyColors.Count / 2).ToString();
+        string playerId = (keySkins.Count / 2).ToString();
         string key1 = ellegibleKeys[0].ToString();
         string key2 = ellegibleKeys[1].ToString();
         string textRegistered = $"Player {playerId} registered to game.\n" +
             $"Key {key1}: Turn left\nKey {key2}: Turn Right\n\n" +
             $"Use these keys to choose your snake color\nand Press ENTER to continue...";
         UIText.text = textRegistered;
-        UIText.color = availableColors[0];
         currentScreen = screens.RegisteredPlayer;
-    }
-
-    void ListBasicColors() {
-        availableColors = new List<Color>();
-        availableColors.Add(Color.white);
-        availableColors.Add(Color.green);
-        availableColors.Add(Color.red);
-        availableColors.Add(Color.blue);
-        availableColors.Add(Color.yellow);
-        availableColors.Add(Color.cyan);
-        availableColors.Add(Color.gray);
-        availableColors.Add(Color.magenta);
-        availableColors.Add(Color.black);
-        availableColors.Add(new Color32(0, 201, 254, 255));   // aqua
-        availableColors.Add(new Color32(232, 0, 254, 255));   // pink
-        availableColors.Add(new Color32( 254 , 161 , 0, 255 )); // orange
-        availableColors.Add(new Color32(143, 0, 254, 255));  // purple
-        availableColors.Add(new Color32(166, 254, 0, 255));  // lime
-        availableColors.Add(new Color32(60, 0, 254, 255));   // navy
-        availableColors.Add(new Color32(165, 42, 42, 255));  // brown
+        snake.SetActive(true);
     }
 }
 
-public class KeyColor
+public class KeySkin
 {
     public KeyCode keyLeft;
     public KeyCode keyRigh;
-    public Color color;
+    public int skinNumber;
 
-    public void Setup(KeyCode kl, KeyCode kr, Color c) {
+    public void Setup(KeyCode kl, KeyCode kr, int c) {
         keyLeft = kl;
         keyRigh = kr;
-        color = c;
+        skinNumber = c;
     }
 }

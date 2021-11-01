@@ -13,19 +13,18 @@ public class Board : MonoBehaviour
     public float speedBoostValue;
     public int foodPoints;
     public GameObject goods;
-    public GameObject head;
-    public GameObject section;
+    public GameObject snake;
     public Material boardTile;
 
     public List<GameObject> goodsList;
     private float currentSpeed;
     private int score;
     private bool gameEnded = false;
-    private List<Snake> playersList;
+    private List<GameObject> playersList;
     public List<Material> matList;
-    //Snake snake1;
-    //Snake snake2;
-
+    AudioSource audio;
+    public SfxManager sfxManager;
+    public AudioClip collect_sound;
 
     private void Start() {
         Camera.main.GetComponent<ScreenHUD>().gameboard = this.GetComponent<Board>();
@@ -34,89 +33,63 @@ public class Board : MonoBehaviour
         plane.transform.position = new Vector3(sizeX / 2.0f -0.5f, -0.5f, sizeY / 2.0f - 0.5f);
         boardTile.SetTextureScale("_MainTex", new Vector2(sizeX, sizeY));
         plane.GetComponent<MeshRenderer>().material = boardTile;
+        audio = GetComponent<AudioSource>();
+
+
+        // Gameplay test
+        /*KeyColor p1 = new KeyColor();
+        p1.keyLeft = KeyCode.LeftArrow;
+        p1.keyRigh = KeyCode.RightArrow;
+        List<KeyColor> klist = new List<KeyColor>();
+        klist.Add(p1);
+        StartGame(klist);*/
     }
 
-    public void StartGame(List<KeyColor> keyColor) {
+    public void StartGame(List<KeySkin> keySkin) {
         if (snakesInitialLength < 3) {
             snakesInitialLength = 3;
         }
-        playersList = new List<Snake>();
+        playersList = new List<GameObject>();
 
-        for (int i = 0; i < keyColor.Count; i++) {
-            GameObject obj = new GameObject("snake" + i);
-            Snake snake = obj.AddComponent<Snake>();
-            snake.Setup(GetComponent<Board>());
-            snake.IAPilot = false;
-            snake.leftKey = keyColor[i].keyLeft;
-            snake.rightKey = keyColor[i].keyRigh;
-
-            snake.stats.GetComponent<Stats>().SetPlayerId("P" + (i + 1).ToString());
-            playersList.Add(snake);
-            snake.SetColor(keyColor[i].color);
-        }
-
-        for (int i = 0; i < keyColor.Count; i++) {
-            GameObject obj = new GameObject("cpu" + i);
-            Snake snake = obj.AddComponent<Snake>();
-            snake.Setup(GetComponent<Board>());
-            snake.IAPilot = true;
-            snake.stats.GetComponent<Stats>().SetPlayerId("CPU");
-            playersList.Add(snake);
-        }
-
-        StartCoroutine(CreateGoods(Goods.GoodsStyle.foodBlock, 0));
-        StartCoroutine(CreateGoods(Goods.GoodsStyle.enginePowerBlock, 5));
-        StartCoroutine(CreateGoods(Goods.GoodsStyle.timeTravelBlock, 8));
-        StartCoroutine(CreateGoods(Goods.GoodsStyle.batteringRamBlock, 10));
-
-    }
-
-    public void StartGame(List<KeyCode> keys) {
-        if (snakesInitialLength < 3) {
-            snakesInitialLength = 3;
-        }
-        playersList = new List<Snake>();
-
-        for (int i = 0; i < keys.Count/2; i++) {
-            GameObject obj = new GameObject("snake" + i);
-            Snake snake = obj.AddComponent<Snake>();
-            snake.Setup(GetComponent<Board>());
-            snake.IAPilot = false;
-            snake.leftKey = keys[i * 2];
-            snake.rightKey = keys[i * 2 + 1];
-            snake.stats.GetComponent<Stats>().SetPlayerId("P" + (i + 1).ToString());
-            playersList.Add(snake);
-            switch (i) {
-                case 0:
-                    snake.SetColor(new Color32(0, 201, 254, 1));
-                    break;
-                case 1:
-                    snake.SetColor(Color.blue);
-                    break;
-                case 2:
-                    snake.SetColor(Color.green);
-                    break;
-                case 3:
-                    snake.SetColor(Color.yellow);
-                    break;
-                default:
-                    break;
+        for (int i = 0; i < keySkin.Count; i++) {
+            for (int j = 0; j < 2; j++) {
+                GameObject obj = Instantiate(snake);
+                Snake snk = obj.GetComponent<Snake>();
+                snk.currentSpeed = startSpeed;
+                snk.maximumSpeed = maximumSpeed;
+                snk.minimumSpeed = minimumSpeed;
+                snk.speedBoostValue = speedBoostValue;
+                snk.snakesInitialLength = snakesInitialLength;
+                snk.foodPoints = foodPoints;
+                snk.sizeX = sizeX;
+                snk.sizeY = sizeY;
+                if (j == 0) {
+                    snk.IAPilot = false;
+                    snk.name = "P" + (i + 1).ToString();
+                    snk.leftKey = keySkin[i].keyLeft;
+                    snk.rightKey = keySkin[i].keyRigh;
+                    snk.skinNumber = keySkin[i].skinNumber;
+                }
+                else {
+                    snk.skinNumber = Random.Range(0,15);
+                    snk.IAPilot = true;
+                    snk.name = "CPU";
+                }
+                snk.Setup();
+                //snk.ChangeSkin(keySkin[i].skinNumber);
+                playersList.Add(obj);
             }
         }
+        Camera.main.GetComponent<ScreenHUD>().AlignPlayerInfo(playersList);
+        StartCoroutine(CreateGoods(HitBlock.BlockStyle.food, 0));
+        StartCoroutine(CreateGoods(HitBlock.BlockStyle.enginePower, 5));
+        StartCoroutine(CreateGoods(HitBlock.BlockStyle.timeTravel, 8));
+        StartCoroutine(CreateGoods(HitBlock.BlockStyle.batteringRam, 10));
 
-        for (int i = 0; i < keys.Count / 2; i++) {
-            GameObject obj = new GameObject("cpu" + i);
-            Snake snake = obj.AddComponent<Snake>();
-            snake.Setup(GetComponent<Board>());
-            snake.IAPilot = true;
-            snake.stats.GetComponent<Stats>().SetPlayerId("CPU");
-            playersList.Add(snake);
-        }
+    }
 
-        StartCoroutine(CreateGoods(Goods.GoodsStyle.foodBlock, 0));
-        StartCoroutine(CreateGoods(Goods.GoodsStyle.enginePowerBlock, 5));
-        StartCoroutine(CreateGoods(Goods.GoodsStyle.timeTravelBlock, 8));
-        StartCoroutine(CreateGoods(Goods.GoodsStyle.batteringRamBlock, 10));
+    public void FinishGame() {
+    
     }
 
     Vector2 GetRandomPos() {
@@ -128,37 +101,41 @@ public class Board : MonoBehaviour
     public void RemoveGoods(int index) {
         float time;
         GameObject itemToDestroy = goodsList[index];
-        switch (itemToDestroy.GetComponent<Goods>().style) {
-            case Goods.GoodsStyle.foodBlock:
-                StartCoroutine(CreateGoods(Goods.GoodsStyle.foodBlock, 0));
+        switch (itemToDestroy.GetComponent<HitBlock>().style) {
+            case HitBlock.BlockStyle.food:
+                sfxManager.PlaySound(SfxManager.Clip.collect);
+                StartCoroutine(CreateGoods(HitBlock.BlockStyle.food, 0));
                 break;
-            case Goods.GoodsStyle.enginePowerBlock:
+            case HitBlock.BlockStyle.enginePower:
+                sfxManager.PlaySound(SfxManager.Clip.speedUp);
                 time = Random.Range(5.0f, 10.0f);
-                StartCoroutine(CreateGoods(Goods.GoodsStyle.enginePowerBlock, time));
+                StartCoroutine(CreateGoods(HitBlock.BlockStyle.enginePower, time));
                 break;
-            case Goods.GoodsStyle.batteringRamBlock:
+            case HitBlock.BlockStyle.batteringRam:
+                sfxManager.PlaySound(SfxManager.Clip.ramBlock);
                 time = Random.Range(5.0f, 10.0f);
-                StartCoroutine(CreateGoods(Goods.GoodsStyle.batteringRamBlock, time));
+                StartCoroutine(CreateGoods(HitBlock.BlockStyle.batteringRam, time));
                 break;
-            case Goods.GoodsStyle.timeTravelBlock:
+            case HitBlock.BlockStyle.timeTravel:
+                sfxManager.PlaySound(SfxManager.Clip.timeTravel);
                 time = Random.Range(5.0f, 10.0f);
-                StartCoroutine(CreateGoods(Goods.GoodsStyle.timeTravelBlock, time));
+                StartCoroutine(CreateGoods(HitBlock.BlockStyle.timeTravel, time));
                 break;
         }
         goodsList.RemoveAt(index);
         Destroy(itemToDestroy);
     }
 
-    public IEnumerator CreateGoods(Goods.GoodsStyle style, float time) {
+    public IEnumerator CreateGoods(HitBlock.BlockStyle style, float time) {
         yield return new WaitForSeconds(time);
         Vector2 pos = GetRandomPos();
         bool invalidPos = true;
         while (invalidPos) {
             bool isInside = false;
             foreach (var player in playersList) {
-                for (int i = 0; i < player.snakeList.Count; i++) {
-                    if (pos.x == (int)Mathf.Round(player.snakeList[0].transform.position.x)) {
-                        if (pos.y == (int)Mathf.Round(player.snakeList[0].transform.position.z)) {
+                for (int i = 0; i < player.GetComponent<Snake>().snakeList.Count; i++) {
+                    if (pos.x == (int)Mathf.Round(player.GetComponent<Snake>().snakeList[0].transform.position.x)) {
+                        if (pos.y == (int)Mathf.Round(player.GetComponent<Snake>().snakeList[0].transform.position.z)) {
                             isInside = true;
                         }
                     }
@@ -173,7 +150,7 @@ public class Board : MonoBehaviour
             }
         }
         GameObject go = Instantiate(goods, new Vector3(pos.x, 0, pos.y), Quaternion.identity);
-        go.GetComponent<Goods>().SetStyle(style);
+        go.GetComponent<HitBlock>().SetStyle(style);
         goodsList.Add(go);
     }
 
