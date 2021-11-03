@@ -30,7 +30,6 @@ public class Snake : MonoBehaviour
     public bool timeTravelBlock;
     private bool foodCollected;
 
-    private List<GameObject> goodsList;
     public List<GameObject> snakeList;
 
     public enum Direction { 
@@ -44,7 +43,7 @@ public class Snake : MonoBehaviour
         timeTravel,
         snakePart,
     }
-    Direction direction;
+    public Direction direction;
     public LayerMask layer;
     public int skinNumber = 0;
 
@@ -76,10 +75,10 @@ public class Snake : MonoBehaviour
         }
         spawnPos = new Vector2(Random.Range(snakesInitialLength, sizeX), Random.Range(snakesInitialLength, sizeY));
         snakeList = new List<GameObject>();
-        goodsList = new List<GameObject>();
         startTime = Time.time;
         score = 0;
         CreateSnake(spawnPos.x, spawnPos.y);
+
         ChangeSkin(skinNumber);
     }
 
@@ -113,13 +112,6 @@ public class Snake : MonoBehaviour
         stats.GetComponent<Stats>().UpdateScore(score);
         UpdateSpeed(0);
     }
-
-    /*public void SetColor(Color newColor) {
-        color = newColor;
-        foreach (var item in snakeList) {
-            item.GetComponent<Renderer>().material.color = color;
-        }
-    }*/
 
     void Update() {
         if (IAPilot) {
@@ -372,6 +364,7 @@ public class Snake : MonoBehaviour
                         break;
                     case HitBlock.BlockStyle.timeTravel:
                         timeTravelBlock = true;
+                        snakeGame.SaveGame(gameObject);
                         stats.GetComponent<Stats>().SetTimeBlock(true);
                         break;
                 }
@@ -407,6 +400,10 @@ public class Snake : MonoBehaviour
         if (batteringRamBlock) {
             batteringRamBlock = false;
             stats.GetComponent<Stats>().SetRamBlock(false);
+        }
+        else if (timeTravelBlock) {
+            timeTravelBlock = false;
+            snakeGame.LoadGame(gameObject);
         }
         else {
             currentSpeed = 0;

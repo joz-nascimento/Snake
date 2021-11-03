@@ -43,7 +43,16 @@ public class Body : MonoBehaviour
         turn_right_fat_obj = transform.Find("turn_right_fat_low").gameObject;
         tail_obj = transform.Find("tail_low").gameObject;
 
-        body_list = new List<GameObject> { head_obj, body_obj, body_fat_obj, turn_left_obj, turn_left_fat_obj, turn_right_obj, turn_right_fat_obj, tail_obj };
+        body_list = new List<GameObject> {
+            head_obj, 
+            body_obj, 
+            body_fat_obj, 
+            turn_left_obj, 
+            turn_left_fat_obj, 
+            turn_right_obj, 
+            turn_right_fat_obj, 
+            tail_obj
+        };
         eatFood = false;
         //eatFood = false;
         movement = Movement.straight;

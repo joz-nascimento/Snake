@@ -17,14 +17,15 @@ public class Board : MonoBehaviour
     public Material boardTile;
 
     public List<GameObject> goodsList;
-    private float currentSpeed;
-    private int score;
     private bool gameEnded = false;
     private List<GameObject> playersList;
-    public List<Material> matList;
-    AudioSource audio;
+    new AudioSource audio;
     public SfxManager sfxManager;
-    public AudioClip collect_sound;
+    public AudioClip startMusic;
+    public AudioClip inGameMusic;
+    public AudioClip endMusic;
+
+    public List<List<SnakeData>> snkData;
 
     private void Start() {
         Camera.main.GetComponent<ScreenHUD>().gameboard = this.GetComponent<Board>();
@@ -34,22 +35,28 @@ public class Board : MonoBehaviour
         boardTile.SetTextureScale("_MainTex", new Vector2(sizeX, sizeY));
         plane.GetComponent<MeshRenderer>().material = boardTile;
         audio = GetComponent<AudioSource>();
-
+        audio.clip = startMusic;
+        audio.Play();
 
         // Gameplay test
-        /*KeyColor p1 = new KeyColor();
+        /*KeySkin p1 = new KeySkin();
         p1.keyLeft = KeyCode.LeftArrow;
         p1.keyRigh = KeyCode.RightArrow;
-        List<KeyColor> klist = new List<KeyColor>();
+        List<KeySkin> klist = new List<KeySkin>();
         klist.Add(p1);
-        StartGame(klist);*/
+        StartGame(klist);
+        Camera.main.transform.position = new Vector3(19.6f, 16.63f, 9);
+        Camera.main.transform.eulerAngles = new Vector3(90, 0, 0);
+        Camera.main.orthographic = true;*/
     }
 
     public void StartGame(List<KeySkin> keySkin) {
+        //coroutines = new List<Coroutine>();
         if (snakesInitialLength < 3) {
             snakesInitialLength = 3;
         }
         playersList = new List<GameObject>();
+        snkData = new List<List<SnakeData>>();
 
         for (int i = 0; i < keySkin.Count; i++) {
             for (int j = 0; j < 2; j++) {
@@ -76,8 +83,8 @@ public class Board : MonoBehaviour
                     snk.name = "CPU";
                 }
                 snk.Setup();
-                //snk.ChangeSkin(keySkin[i].skinNumber);
                 playersList.Add(obj);
+                snkData.Add(new List<SnakeData>());
             }
         }
         Camera.main.GetComponent<ScreenHUD>().AlignPlayerInfo(playersList);
@@ -85,11 +92,54 @@ public class Board : MonoBehaviour
         StartCoroutine(CreateGoods(HitBlock.BlockStyle.enginePower, 5));
         StartCoroutine(CreateGoods(HitBlock.BlockStyle.timeTravel, 8));
         StartCoroutine(CreateGoods(HitBlock.BlockStyle.batteringRam, 10));
-
+        audio.clip = inGameMusic;
+        audio.Play();
     }
 
     public void FinishGame() {
     
+    }
+
+    public void SaveGame(GameObject obj) {
+        int index = playersList.IndexOf(obj);
+        List<SnakeData> snakeDatas = new List<SnakeData>();
+            for (int j = 0; j < playersList.Count; j++) {
+                snakeDatas.Add(new SnakeData());
+                snakeDatas[snakeDatas.Count-1].Save(playersList[j].GetComponent<Snake>());
+            }
+        snkData[index] = snakeDatas;
+        Debug.Log("SaveGame");
+    }
+
+    public void LoadGame(GameObject obj) {
+        int index = playersList.IndexOf(obj);
+        StopAllCoroutines();
+        for (int i = 0; i < playersList.Count; i++) {
+            playersList[i].GetComponent<Snake>().StopAllCoroutines();
+            Destroy(playersList[i].GetComponent<Snake>().stats.gameObject);
+            Destroy(playersList[i]);
+        }
+        playersList = new List<GameObject>();
+        for (int i = 0; i < snkData[index].Count; i++) {
+            GameObject newObj = Instantiate(snake);
+            playersList.Add(snkData[index][i].LoadGame(newObj));
+        }
+        Debug.Log("index: " + index);
+        playersList[index].GetComponent<Snake>().timeTravelBlock = false;
+        playersList[index].GetComponent<Snake>().stats.GetComponent<Stats>().SetTimeBlock(false);
+        Camera.main.GetComponent<ScreenHUD>().AlignPlayerInfo(playersList);
+        StartCoroutine(CreateGoods(HitBlock.BlockStyle.timeTravel, 8));
+        Debug.Log("LoadGame");
+    }
+
+    private void Update() {
+        if (Input.GetKeyDown(KeyCode.S)) {
+            //SaveGame();
+            
+        }
+        else if (Input.GetKeyDown(KeyCode.L)) {
+            //LoadGame();
+        }
     }
 
     Vector2 GetRandomPos() {
@@ -155,4 +205,119 @@ public class Board : MonoBehaviour
     }
 
 
+}
+
+public class SnakeData {
+    public string name;
+    public bool IAPilot;
+    public float currentSpeed;
+    public int score;
+    public int skinNumber;
+    public KeyCode leftKey;
+    public KeyCode rightKey;
+
+    public List<Vector3> partPos;
+    public List<Quaternion> partRot;
+    public List<bool> eatFood;
+    public Snake.Direction direction;
+    internal float maximumSpeed;
+    internal float minimumSpeed;
+    internal float speedBoostValue;
+    internal int foodPoints;
+    internal int sizeX;
+    internal int sizeY;
+    internal int snakesInitialLength;
+    private bool batteringRamBlock;
+    private bool timeTravelBlock;
+
+    public void Save(Snake snake) {
+        partPos = new List<Vector3>();
+        partRot = new List<Quaternion>();
+        eatFood = new List<bool>();
+        name = snake.name;
+        IAPilot = snake.IAPilot;
+        currentSpeed = snake.currentSpeed;
+        score = snake.score;
+        skinNumber = snake.skinNumber;
+        leftKey = snake.leftKey;
+        rightKey = snake.rightKey;
+        maximumSpeed = snake.maximumSpeed;
+        minimumSpeed = snake.minimumSpeed;
+        speedBoostValue = snake.speedBoostValue;
+        foodPoints = snake.foodPoints;
+        sizeX = snake.sizeX;
+        sizeY = snake.sizeY;
+        snakesInitialLength = snake.snakesInitialLength;
+        batteringRamBlock = snake.batteringRamBlock;
+        timeTravelBlock = snake.timeTravelBlock;
+
+        foreach (var item in snake.snakeList) {
+            partPos.Add(item.transform.position);
+            partRot.Add(item.transform.rotation);
+            eatFood.Add(item.GetComponent<Body>().eatFood);
+        }
+        direction = snake.direction;
+    }
+
+    public GameObject LoadGame(GameObject obj) {
+        Snake snk = obj.GetComponent<Snake>();
+        snk.currentSpeed = currentSpeed;
+        snk.maximumSpeed = maximumSpeed;
+        snk.minimumSpeed = minimumSpeed;
+        snk.speedBoostValue = speedBoostValue;
+        snk.snakesInitialLength = partPos.Count;
+        snk.foodPoints = foodPoints;
+        snk.sizeX = sizeX;
+        snk.sizeY = sizeY;
+        snk.IAPilot = IAPilot;
+        snk.name = name;
+        snk.leftKey = leftKey;
+        snk.rightKey = rightKey;
+        snk.skinNumber = skinNumber;
+        snk.direction = direction;
+        snk.Setup();
+        snk.batteringRamBlock = batteringRamBlock;
+        snk.timeTravelBlock = timeTravelBlock;
+        snk.snakesInitialLength = snakesInitialLength;
+        snk.ChangeSkin(skinNumber);
+        snk.score = score;
+        snk.stats.GetComponent<Stats>().UpdateScore(snk.score);
+        snk.stats.GetComponent<Stats>().SetTimeBlock(timeTravelBlock);
+        snk.stats.GetComponent<Stats>().SetRamBlock(batteringRamBlock);
+
+        for (int i = 0; i < obj.GetComponent<Snake>().snakeList.Count; i++) {
+            obj.GetComponent<Snake>().snakeList[i].transform.SetPositionAndRotation(partPos[i], partRot[i]);
+            obj.GetComponent<Snake>().snakeList[i].GetComponent<Body>().eatFood = eatFood[i];
+        }
+        for (int i = obj.GetComponent<Snake>().snakeList.Count - 2; i > 1; i--) {
+            Snake.Direction dir = GetDirection(obj.GetComponent<Snake>().snakeList[i], obj.GetComponent<Snake>().snakeList[i - 1]);
+            switch (dir) {
+                case Snake.Direction.left:
+                    obj.GetComponent<Snake>().snakeList[i].GetComponent<Body>().Move(Body.Movement.turnLeft);
+                    break;
+                case Snake.Direction.right:
+                    obj.GetComponent<Snake>().snakeList[i].GetComponent<Body>().Move(Body.Movement.turnRight);
+                    break;
+                case Snake.Direction.forward:
+                    obj.GetComponent<Snake>().snakeList[i].GetComponent<Body>().Move(Body.Movement.straight);
+                    break;
+            }
+        }
+        return obj;
+    }
+
+    Snake.Direction GetDirection(GameObject from, GameObject to) {
+        Vector3 targetDir = to.transform.position - from.transform.position;
+        Vector3 forward = from.transform.forward;
+        float angle = Vector3.SignedAngle(targetDir, forward, Vector3.up);
+        if (angle < -5) {
+            return Snake.Direction.right;
+        }
+        else if (angle > 5) {
+            return Snake.Direction.left;
+        }
+        else {
+            return Snake.Direction.forward;
+        }
+    }
 }

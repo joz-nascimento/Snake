@@ -44,14 +44,13 @@ public class ScreenHUD : MonoBehaviour
     }
 
     screens currentScreen = screens.FirstPlayer;
-
     // Gameplay teste
     //screens currentScreen = screens.InGame;
 
 
     void Start() {
-        Camera.main.transform.position = new Vector3(5.9f, 5.75f, 9.31f);
-        Camera.main.transform.eulerAngles = new Vector3(58.8f, -195.2f, 0);
+        Camera.main.transform.position = new Vector3(8.09f, 6.8f, 12.41f);
+        Camera.main.transform.eulerAngles = new Vector3(51.23f, 164.8f, 0);
         Camera.main.orthographic = false;
         playersInfoList = new List<GameObject>();
         //indexColor = 0;
@@ -125,7 +124,7 @@ public class ScreenHUD : MonoBehaviour
         Mytext.horizontalOverflow = HorizontalWrapMode.Overflow;
         Mytext.verticalOverflow = VerticalWrapMode.Overflow;
         Mytext.alignment = TextAnchor.MiddleCenter;
-        Mytext.fontSize = 30;
+        Mytext.fontSize = 25;
 
         // Text position
         rectTransform = Mytext.GetComponent<RectTransform>();
@@ -146,7 +145,7 @@ public class ScreenHUD : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.Return)) {
                     UIText.enabled = false;
                     currentScreen = screens.InGame;
-                    Camera.main.transform.position = new Vector3(20, 16.63f, 9);
+                    Camera.main.transform.position = new Vector3(19.6f, 16.63f, 9);
                     Camera.main.transform.eulerAngles = new Vector3(90, 0, 0);
                     Camera.main.orthographic = true;
                     Destroy(snake);
@@ -270,7 +269,7 @@ public class ScreenHUD : MonoBehaviour
     }
 
     void RegisterPlayer() {
-        string playerId = (keySkins.Count / 2).ToString();
+        string playerId = (keySkins.Count).ToString();
         string key1 = ellegibleKeys[0].ToString();
         string key2 = ellegibleKeys[1].ToString();
         string textRegistered = $"Player {playerId} registered to game.\n" +
