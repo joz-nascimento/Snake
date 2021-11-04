@@ -118,14 +118,10 @@ public class Snake : MonoBehaviour
             IADrive();
         } else {
             if (Input.GetKeyDown(leftKey)) {
-                //snakeList[1].GetComponent<Body>().Move(Body.Movement.turnLeft);
                 direction = Direction.left;
-                //snakeList[0].transform.Rotate(0, -90, 0);
             }
             else if (Input.GetKeyDown(rightKey)) {
                 direction = Direction.right;
-                //snakeList[1].GetComponent<Body>().Move(Body.Movement.turnRight);
-                //snakeList[0].transform.Rotate(0, 90, 0);
             }
 
             else if (Input.GetKey(KeyCode.Return) & gameEnded) {
@@ -160,7 +156,6 @@ public class Snake : MonoBehaviour
             else if (Mathf.Round(pos.z) < 0) {
                 snakeList[0].transform.position = new Vector3(pos.x, pos.y, sizeY-1);
             }
-            //TestEat();
         }
     }
 
@@ -173,11 +168,9 @@ public class Snake : MonoBehaviour
 
     private void IADrive() {
         DirectionToFood();
-        HitBlock.BlockStyle hitBlock = CheckHit(direction);
-        if (hitBlock == HitBlock.BlockStyle.snakePart) {
+        if (CheckHitOnly(direction)) {
             if (direction == Direction.left) {
-                hitBlock = CheckHit(Direction.forward);
-                if (hitBlock == HitBlock.BlockStyle.snakePart) {
+                if (CheckHitOnly(Direction.forward)) {
                     direction = Direction.right;
                 }
                 else {
@@ -185,8 +178,7 @@ public class Snake : MonoBehaviour
                 }
             }
             else if (direction == Direction.right) {
-                hitBlock = CheckHit(Direction.forward);
-                if (hitBlock == HitBlock.BlockStyle.snakePart) {
+                if (CheckHitOnly(Direction.forward)) {
                     direction = Direction.left;
                 }
                 else {
@@ -194,8 +186,7 @@ public class Snake : MonoBehaviour
                 }
             }
             else {
-                hitBlock = CheckHit(Direction.left);
-                if (hitBlock == HitBlock.BlockStyle.snakePart) {
+                if (CheckHitOnly(Direction.left)) {
                     direction = Direction.right;
                 }
                 else {
@@ -314,6 +305,29 @@ public class Snake : MonoBehaviour
         }
         return false;
     }*/
+
+    public bool CheckHitOnly(Direction dir = Direction.forward) {
+        Vector3 rotation;
+        if (dir == Direction.forward) {rotation = snakeList[0].transform.forward;}
+        else if (dir == Direction.left) {rotation = -snakeList[0].transform.right;}
+        else {rotation = snakeList[0].transform.right;}
+
+        Vector3 testPos = snakeList[0].transform.position;
+        Vector3 MoveTowards = snakeList[0].transform.position + rotation;
+        if      (Mathf.Round(MoveTowards.x) < 0)         {testPos = new Vector3(sizeX, testPos.y, testPos.z);}
+        else if (Mathf.Round(MoveTowards.x) > sizeX - 1) {testPos = new Vector3(-1,        testPos.y, testPos.z);}
+        else if (Mathf.Round(MoveTowards.z) < 0)         {testPos = new Vector3(testPos.x, testPos.y, sizeY);}
+        else if (Mathf.Round(MoveTowards.z) > sizeY - 1) {testPos = new Vector3(testPos.x, testPos.y, -1);}
+
+        var ray = new Ray(testPos, rotation);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, 1.5f, -1)) {
+            if (hit.transform.gameObject.CompareTag("Goods") == false) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public HitBlock.BlockStyle CheckHit(Direction dir = Direction.forward) {
         Vector3 rotation;

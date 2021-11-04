@@ -256,7 +256,8 @@ public class SnakeData {
             partRot.Add(item.transform.rotation);
             eatFood.Add(item.GetComponent<Body>().eatFood);
         }
-        direction = snake.direction;
+        //direction = snake.direction;
+        direction = Snake.Direction.forward;
     }
 
     public GameObject LoadGame(GameObject obj) {
