@@ -526,8 +526,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   collect_sound: {fileID: 8300000, guid: db9a94c516644a34882d380dc87b02ef, type: 3}
-  timetravel_sound: {fileID: 8300000, guid: 30f149bf91a9af047b3729292a509134, type: 3}
-  ramBlock_sound: {fileID: 8300000, guid: ec8bed0845be97e4f9dfceb411477451, type: 3}
+  timetravel_sound: {fileID: 8300000, guid: e618db5d467b32f4d9e73cf2f8478c84, type: 3}
+  ramBlock_sound: {fileID: 8300000, guid: 8ca6ad580e066d64e98fe66961fe4f70, type: 3}
   speed_sound: {fileID: 8300000, guid: a8349c54b8418fa41876966bd6b5fb21, type: 3}
 --- !u!82 &1465020653
 AudioSource:
@@ -681,23 +681,6 @@ MonoBehaviour:
   snake: {fileID: 8986706024966657018, guid: 059cd9ffa594d224b97cb94a865db176, type: 3}
   boardTile: {fileID: 2100000, guid: 3dcf6869cc6b04641913563a622ecbdc, type: 2}
   goodsList: []
-  matList:
-  - {fileID: 2100000, guid: e3e73c3e14ee6414baa9b02ad1608f30, type: 2}
-  - {fileID: 2100000, guid: b506dfb3157805c4698b05959a399fbe, type: 2}
-  - {fileID: 2100000, guid: dadf3fad582ed4e47bcad595421131e4, type: 2}
-  - {fileID: 2100000, guid: a89fc91c94b44c742a6d4e5e46e35ace, type: 2}
-  - {fileID: 2100000, guid: 892e61866b77f6d48baf3101c0b0c426, type: 2}
-  - {fileID: 2100000, guid: 8321c8bf35308b748bac2ea655525ec4, type: 2}
-  - {fileID: 2100000, guid: 3fd379e903df8d64eaf30b4beb7c58ff, type: 2}
-  - {fileID: 2100000, guid: 0528a624355449547aeb7e93addeb25f, type: 2}
-  - {fileID: 2100000, guid: e7a670ff77105c04e9a89c55b14eabc4, type: 2}
-  - {fileID: 2100000, guid: 861e3a6fe514120499a2ad9c42e50a2b, type: 2}
-  - {fileID: 2100000, guid: 4e1cfc180855c174288a0a90b4d79346, type: 2}
-  - {fileID: 2100000, guid: 07c6ede8fdc253d46a233fb542b72fd1, type: 2}
-  - {fileID: 2100000, guid: d2d1e5f8e246c2947ae6701c47bdcfe2, type: 2}
-  - {fileID: 2100000, guid: 5a42d1967b8e97746aab2e5ded65448c, type: 2}
-  - {fileID: 2100000, guid: 78b9d5438e519bc46a8292ba59f59e4e, type: 2}
-  - {fileID: 2100000, guid: ecb6bcbe9f922ea40b2b96c83027b0d5, type: 2}
   sfxManager: {fileID: 1465020652}
   startMusic: {fileID: 8300000, guid: 90a896c2e0f76874aaa4baf3e4641c5a, type: 3}
   inGameMusic: {fileID: 8300000, guid: 9feb0146743284540894a03dc3371e61, type: 3}
@@ -727,7 +710,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 9feb0146743284540894a03dc3371e61, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 1

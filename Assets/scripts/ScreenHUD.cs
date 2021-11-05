@@ -263,6 +263,7 @@ public class ScreenHUD : MonoBehaviour
                     UIText.text = "Game Paused\n\n< Continue >\tQuit";
                     UIText.enabled = true;
                     currentScreen = screens.PauseGame;
+                    gameboard.SetMusicVolume(0.1f);
                 }
                 break;
             case screens.PauseGame:
@@ -270,6 +271,7 @@ public class ScreenHUD : MonoBehaviour
                     Time.timeScale = 1;
                     UIText.enabled = false;
                     currentScreen = screens.InGame;
+                    gameboard.SetMusicVolume(1);
                 }
                 else if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow)) {
                     if (opt == Options.continueGame) {
@@ -286,9 +288,12 @@ public class ScreenHUD : MonoBehaviour
                         Time.timeScale = 1;
                         UIText.enabled = false;
                         currentScreen = screens.InGame;
+                        gameboard.SetMusicVolume(1);
                     }
                     else if (opt == Options.quitGame) {
                         SetStartScreen();
+                        gameboard.SetMusicVolume(1);
+                        gameboard.PlayStartMusic();
                     }
                 }
                 break;
@@ -307,6 +312,7 @@ public class ScreenHUD : MonoBehaviour
         playerKeys = new List<KeyCode>();
         CreateModel();
         snake.SetActive(false);
+        gameboard.PlayStartMusic();
     }
 
     public void SetGameOverScreen() {

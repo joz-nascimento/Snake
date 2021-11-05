@@ -37,8 +37,9 @@ public class Board : MonoBehaviour
         boardTile.SetTextureScale("_MainTex", new Vector2(sizeX, sizeY));
         plane.GetComponent<MeshRenderer>().material = boardTile;
         audio = GetComponent<AudioSource>();
-        audio.clip = startMusic;
-        audio.Play();
+        //audio.clip = startMusic;
+        //audio.Play();
+        PlayStartMusic();
 
         // Gameplay test
         /*KeySkin p1 = new KeySkin();
@@ -105,6 +106,7 @@ public class Board : MonoBehaviour
         Camera.main.GetComponent<ScreenHUD>().AlignPlayerInfo(playersList);
         audio.clip = inGameMusic;
         audio.Play();
+        //PlayStartMusic();
     }
 
     public void GameOver() {
@@ -113,6 +115,15 @@ public class Board : MonoBehaviour
         }
         StopAllCoroutines();
         Camera.main.GetComponent<ScreenHUD>().SetGameOverScreen();
+        audio.clip = endMusic;
+        audio.Play();
+    }
+
+    public void PlayStartMusic() {
+        audio.clip = startMusic;
+        //audio.volume = 0.01f;
+        audio.Play();
+        FadeAudioSource.StartFade(audio, 3.0f, 1.0f);
     }
 
     public void FinishGame() {
@@ -234,7 +245,9 @@ public class Board : MonoBehaviour
         goodsList.Add(go);
     }
 
-
+    public void SetMusicVolume(float v) {
+        audio.volume = v;
+    }
 }
 
 public class GoodsData {
@@ -383,4 +396,20 @@ public class SnakeData {
             return Snake.Direction.forward;
         }
     }
+}
+
+public static class FadeAudioSource {
+
+    public static IEnumerator StartFade(AudioSource audioSource, float duration, float targetVolume) {
+        float currentTime = 0;
+        float start = audioSource.volume;
+
+        while (currentTime < duration) {
+            currentTime += Time.deltaTime;
+            audioSource.volume = Mathf.Lerp(start, targetVolume, currentTime / duration);
+            yield return null;
+        }
+        yield break;
+    }
+
 }
