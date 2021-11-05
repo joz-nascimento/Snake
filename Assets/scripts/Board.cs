@@ -26,6 +26,8 @@ public class Board : MonoBehaviour
     public AudioClip endMusic;
 
     public List<List<SnakeData>> snkData;
+    public List<GoodsData> goodsData;
+
 
     private void Start() {
         Camera.main.GetComponent<ScreenHUD>().gameboard = this.GetComponent<Board>();
@@ -50,16 +52,28 @@ public class Board : MonoBehaviour
         Camera.main.orthographic = true;*/
     }
 
-    public void StartGame(List<KeySkin> keySkin) {
-        //coroutines = new List<Coroutine>();
+    public void StartGame(List<KeySkin> keySkin, bool multiplayer = true) {
         if (snakesInitialLength < 3) {
             snakesInitialLength = 3;
         }
+
         playersList = new List<GameObject>();
         snkData = new List<List<SnakeData>>();
+        goodsData = new List<GoodsData>();
+        goodsList = new List<GameObject>();
+
+        StartCoroutine(CreateGoods(HitBlock.BlockStyle.food, 0));
+        StartCoroutine(CreateGoods(HitBlock.BlockStyle.enginePower, 5));
+        StartCoroutine(CreateGoods(HitBlock.BlockStyle.timeTravel, 8));
+        StartCoroutine(CreateGoods(HitBlock.BlockStyle.batteringRam, 10));
+
+        int cpu = 1;
+        if (multiplayer == false) {
+            cpu = 0;
+        }
 
         for (int i = 0; i < keySkin.Count; i++) {
-            for (int j = 0; j < 2; j++) {
+            for (int j = 0; j <= cpu; j++) {
                 GameObject obj = Instantiate(snake);
                 Snake snk = obj.GetComponent<Snake>();
                 snk.currentSpeed = startSpeed;
@@ -85,29 +99,45 @@ public class Board : MonoBehaviour
                 snk.Setup();
                 playersList.Add(obj);
                 snkData.Add(new List<SnakeData>());
+                goodsData.Add(new GoodsData());
             }
         }
         Camera.main.GetComponent<ScreenHUD>().AlignPlayerInfo(playersList);
-        StartCoroutine(CreateGoods(HitBlock.BlockStyle.food, 0));
-        StartCoroutine(CreateGoods(HitBlock.BlockStyle.enginePower, 5));
-        StartCoroutine(CreateGoods(HitBlock.BlockStyle.timeTravel, 8));
-        StartCoroutine(CreateGoods(HitBlock.BlockStyle.batteringRam, 10));
         audio.clip = inGameMusic;
         audio.Play();
     }
 
+    public void GameOver() {
+        foreach (var item in playersList) {
+            item.GetComponent<Snake>().currentSpeed = 0;
+        }
+        StopAllCoroutines();
+        Camera.main.GetComponent<ScreenHUD>().SetGameOverScreen();
+    }
+
     public void FinishGame() {
-    
+        StopAllCoroutines();
+        foreach (var item in goodsList) {
+            Destroy(item);
+        }
+        foreach (var item in playersList) {
+            Destroy(item.GetComponent<Snake>().stats.gameObject);
+            Destroy(item);
+        }
+        Camera.main.transform.position = new Vector3(8.09f, 6.8f, 12.41f);
+        Camera.main.transform.eulerAngles = new Vector3(51.23f, 164.8f, 0);
+        Camera.main.orthographic = false;
     }
 
     public void SaveGame(GameObject obj) {
         int index = playersList.IndexOf(obj);
         List<SnakeData> snakeDatas = new List<SnakeData>();
-            for (int j = 0; j < playersList.Count; j++) {
-                snakeDatas.Add(new SnakeData());
-                snakeDatas[snakeDatas.Count-1].Save(playersList[j].GetComponent<Snake>());
-            }
+        for (int i = 0; i < playersList.Count; i++) {
+            snakeDatas.Add(new SnakeData());
+            snakeDatas[snakeDatas.Count-1].Save(playersList[i].GetComponent<Snake>());
+        }
         snkData[index] = snakeDatas;
+        goodsData[index].Save(goodsList);
         Debug.Log("SaveGame");
     }
 
@@ -124,10 +154,10 @@ public class Board : MonoBehaviour
             GameObject newObj = Instantiate(snake);
             playersList.Add(snkData[index][i].LoadGame(newObj));
         }
-        Debug.Log("index: " + index);
         playersList[index].GetComponent<Snake>().timeTravelBlock = false;
         playersList[index].GetComponent<Snake>().stats.GetComponent<Stats>().SetTimeBlock(false);
         Camera.main.GetComponent<ScreenHUD>().AlignPlayerInfo(playersList);
+        goodsData[index].LoadGame(GetComponent<Board>());
         StartCoroutine(CreateGoods(HitBlock.BlockStyle.timeTravel, 8));
         Debug.Log("LoadGame");
     }
@@ -207,6 +237,38 @@ public class Board : MonoBehaviour
 
 }
 
+public class GoodsData {
+    public List<Vector3> pos;
+    public List<HitBlock.BlockStyle> style;
+
+    public void Save(List<GameObject> blocks) {
+        pos = new List<Vector3>();
+        style = new List<HitBlock.BlockStyle>();
+        foreach (var item in blocks) {
+            HitBlock.BlockStyle blockStyle = item.GetComponent<HitBlock>().style;
+            if (blockStyle == HitBlock.BlockStyle.timeTravel) {
+                continue;
+            }
+            else {
+                pos.Add(item.transform.position);
+                style.Add(blockStyle);
+            }
+        }
+    }
+
+    public void LoadGame(Board snakeGame) {
+        foreach (var item in snakeGame.goodsList) {
+            MonoBehaviour.Destroy(item);
+        }
+        snakeGame.goodsList = new List<GameObject>();
+        for (int i = 0; i < pos.Count; i++) {
+            GameObject go = MonoBehaviour.Instantiate(snakeGame.goods, pos[i], Quaternion.identity);
+            go.GetComponent<HitBlock>().SetStyle(style[i]);
+            snakeGame.goodsList.Add(go);
+        }
+    }
+}
+
 public class SnakeData {
     public string name;
     public bool IAPilot;
@@ -256,8 +318,8 @@ public class SnakeData {
             partRot.Add(item.transform.rotation);
             eatFood.Add(item.GetComponent<Body>().eatFood);
         }
-        //direction = snake.direction;
-        direction = Snake.Direction.forward;
+        direction = snake.direction;
+        //direction = Snake.Direction.forward;
     }
 
     public GameObject LoadGame(GameObject obj) {
@@ -290,7 +352,7 @@ public class SnakeData {
             obj.GetComponent<Snake>().snakeList[i].transform.SetPositionAndRotation(partPos[i], partRot[i]);
             obj.GetComponent<Snake>().snakeList[i].GetComponent<Body>().eatFood = eatFood[i];
         }
-        for (int i = obj.GetComponent<Snake>().snakeList.Count - 2; i > 1; i--) {
+        for (int i = obj.GetComponent<Snake>().snakeList.Count - 2; i > 0; i--) {
             Snake.Direction dir = GetDirection(obj.GetComponent<Snake>().snakeList[i], obj.GetComponent<Snake>().snakeList[i - 1]);
             switch (dir) {
                 case Snake.Direction.left:

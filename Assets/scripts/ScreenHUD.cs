@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,7 +30,7 @@ public class ScreenHUD : MonoBehaviour
     public bool ready = false;
     public Board gameboard;
 
-    string textStart = "Press any key to start....";
+    string textStart = "A Snake Game...\n< Classic > \t Multiplayer \t Exit\n\nPress keys left or Right to choose and press ENTER...";
     string textInitial = "Press two keys for 1 sec\nto enter in the game";
     string textNext = "Press ENTER to start game\nor press another two keys to another player";
     string textGameOver = "Game Over\n\nPress any key to start screen...";
@@ -41,9 +42,17 @@ public class ScreenHUD : MonoBehaviour
         RegisteredPlayer,
         InGame,
         GameOver,
+        PauseGame,
     }
-
-    screens currentScreen = screens.FirstPlayer;
+    enum Options {
+        classicGame,
+        multiplayer,
+        exit,
+        continueGame,
+        quitGame,
+    }
+    Options opt;
+    screens currentScreen;
     // Gameplay teste
     //screens currentScreen = screens.InGame;
 
@@ -82,6 +91,10 @@ public class ScreenHUD : MonoBehaviour
         }
         CreateModel();
         snake.SetActive(false);
+
+        currentScreen = screens.Start;
+        UIText.text = textStart;
+        opt = Options.classicGame;
     }
 
     void CreateModel() {
@@ -177,24 +190,127 @@ public class ScreenHUD : MonoBehaviour
                     }
                     snake.GetComponent<Snake>().ChangeSkin(indexSkin);
                 }
-                //UIText.color = currentSkin;
                 break;
             case screens.GameOver:
                 UIText.enabled = true;
                 UIText.text = textGameOver;
                 if (Input.anyKeyDown) {
-                    currentScreen = screens.Start;
+                    SetStartScreen();
                 }
                 break;
             case screens.Start:
-                UIText.text = textStart;
-                if (Input.anyKeyDown) {
-                    currentScreen = screens.FirstPlayer;
+                if (Input.GetKeyDown(KeyCode.RightArrow)) {
+                    switch (opt) {
+                        case Options.classicGame:
+                            UIText.text = textStart.Replace("< ", "").Replace(" >", "").Replace("Multiplayer", "< Multiplayer >");
+                            opt = Options.multiplayer;
+                            break;
+                        case Options.multiplayer:
+                            UIText.text = textStart.Replace("< ", "").Replace(" >", "").Replace("Exit", "< Exit >");
+                            opt = Options.exit;
+                            break;
+                        case Options.exit:
+                            UIText.text = textStart.Replace("< ", "").Replace(" >", "").Replace("Classic", "< Classic >");
+                            opt = Options.classicGame;
+                            break;
+                    }
+                }
+                else if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+                    switch (opt) {
+                        case Options.classicGame:
+                            UIText.text = textStart.Replace("< ", "").Replace(" >", "").Replace("Exit", "< Exit >");
+                            opt = Options.exit;
+                            break;
+                        case Options.multiplayer:
+                            UIText.text = textStart.Replace("< ", "").Replace(" >", "").Replace("Classic", "< Classic >");
+                            opt = Options.classicGame;
+                            break;
+                        case Options.exit:
+                            UIText.text = textStart.Replace("< ", "").Replace(" >", "").Replace("Multiplayer", "< Multiplayer >");
+                            opt = Options.multiplayer;
+                            break;
+                    }
+                }
+                else if (Input.GetKeyDown(KeyCode.Return)) {
+                    switch (opt) {
+                        case Options.classicGame:
+                            KeySkin p1 = new KeySkin();
+                            p1.keyLeft = KeyCode.LeftArrow;
+                            p1.keyRigh = KeyCode.RightArrow;
+                            List<KeySkin> klist = new List<KeySkin>();
+                            klist.Add(p1);
+                            Camera.main.transform.position = new Vector3(19.6f, 16.63f, 9);
+                            Camera.main.transform.eulerAngles = new Vector3(90, 0, 0);
+                            Camera.main.orthographic = true;
+                            UIText.enabled = false;
+                            currentScreen = screens.InGame;
+                            gameboard.StartGame(klist, false);
+                            break;
+                        case Options.multiplayer:
+                            currentScreen = screens.FirstPlayer;
+                            break;
+                        case Options.exit:
+                            Application.Quit();
+                            break;
+                    }
+
+                }
+                break;
+            case screens.InGame:
+                if (Input.GetKeyDown(KeyCode.Escape)) {
+                    Time.timeScale = 0;
+                    opt = Options.continueGame;
+                    UIText.text = "Game Paused\n\n< Continue >\tQuit";
+                    UIText.enabled = true;
+                    currentScreen = screens.PauseGame;
+                }
+                break;
+            case screens.PauseGame:
+                if (Input.GetKeyDown(KeyCode.Escape)) {
+                    Time.timeScale = 1;
+                    UIText.enabled = false;
+                    currentScreen = screens.InGame;
+                }
+                else if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow)) {
+                    if (opt == Options.continueGame) {
+                        opt = Options.quitGame;
+                        UIText.text = "Game Paused\n\nContinue\t< Quit >";
+                    }
+                    else if (opt == Options.quitGame) {
+                        opt = Options.continueGame;
+                        UIText.text = "Game Paused\n\n< Continue >\tQuit";
+                    }
+                }
+                else if (Input.GetKeyDown(KeyCode.Return)) {
+                    if (opt == Options.continueGame) {
+                        Time.timeScale = 1;
+                        UIText.enabled = false;
+                        currentScreen = screens.InGame;
+                    }
+                    else if (opt == Options.quitGame) {
+                        SetStartScreen();
+                    }
                 }
                 break;
             default:
                 break;
         }
+    }
+
+    private void SetStartScreen() {
+        Time.timeScale = 1;
+        gameboard.FinishGame();
+        UIText.text = textStart;
+        currentScreen = screens.Start;
+        opt = Options.classicGame;
+        keySkins = new List<KeySkin>();
+        playerKeys = new List<KeyCode>();
+        CreateModel();
+        snake.SetActive(false);
+    }
+
+    public void SetGameOverScreen() {
+        currentScreen = screens.GameOver;
     }
 
     void ScanKeys() {

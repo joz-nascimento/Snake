@@ -88,8 +88,8 @@ public class Snake : MonoBehaviour
         for (int i = 0; i < snakeList.Count - 1; i++) {
             Destroy(snakeList[i]);
         }
+        direction = Direction.forward;
         snakeList = new List<GameObject>();
-
         snakeList.Add(Instantiate(section, pos, Quaternion.identity));
         snakeList[0].GetComponent<Body>().SetSection(Body.Section.head);
         snakeList[0].GetComponent<Rigidbody>().detectCollisions = false;
@@ -114,6 +114,9 @@ public class Snake : MonoBehaviour
     }
 
     void Update() {
+        if (Time.timeScale == 0) {
+            return;
+        }
         if (IAPilot) {
             IADrive();
         } else {
@@ -239,6 +242,8 @@ public class Snake : MonoBehaviour
         Vector3 currentPos;
         Quaternion currentRot;
 
+        HitBlock.BlockStyle hitBlock = CheckHit(direction);
+
         // Rotate head
         if (direction == Direction.left) {
             snakeList[0].transform.Rotate(0, -90, 0);
@@ -246,8 +251,7 @@ public class Snake : MonoBehaviour
         else if (direction == Direction.right) {
             snakeList[0].transform.Rotate(0, 90, 0);
         }
-
-        HitBlock.BlockStyle hitBlock = CheckHit();
+        
         if (foodCollected) {
             snakeList.Insert(1, Instantiate(section, lastPos, lastRot));
             snakeList[1].transform.parent = gameObject.transform;
@@ -425,7 +429,9 @@ public class Snake : MonoBehaviour
                 Invoke(nameof(Setup), 1.0f);
             }
             else {
-                Invoke(nameof(Setup), 1.0f);
+                // - 1 life
+                //Invoke(nameof(Setup), 1.0f);
+                snakeGame.GameOver();
             }
         }
         Blink(2);
